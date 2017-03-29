@@ -618,8 +618,6 @@ export class Transition implements IHookRegistry {
    */
   run(): Promise<any> {
     let runAllHooks = TransitionHook.runAllHooks;
-    let globals = this.router.globals;
-    globals.transitionHistory.enqueue(this);
 
     // Gets transition hooks array for the given phase
     const hooksFor = (phase: TransitionHookPhase) =>

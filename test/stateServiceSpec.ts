@@ -561,6 +561,25 @@ describe('stateService', function () {
       done();
     });
 
+    fit('does not abort pending transition when a new transition is cancelled by onBefore hook', (done) => {
+      router.trace.enable(1);
+      router.transitionService.onBefore({}, (t) => {
+        if (t.$id === 1) return false;
+        return (new Promise(resolve => setTimeout(resolve, 100))) as any;
+      });
+
+      let promise1 = $state.transitionTo('A'); // takes 100 ms
+      let promise2 = $state.transitionTo('A'); // is cancelled
+      let promise2Error;
+
+      promise1.then(() => {
+        expect($state.current.name).toBe('A');
+        expect(promise2Error).toBeDefined();
+        done();
+      });
+      promise2.then((err) => promise2Error = err);
+    });
+
     it('triggers onEnter and onExit callbacks', async(done) => {
       let log = "";
       await initStateTo(A);

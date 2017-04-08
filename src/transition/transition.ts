@@ -628,6 +628,16 @@ export class Transition implements IHookRegistry {
     const chainFor = (phase: TransitionHookPhase) =>
         TransitionHook.chain(hooksFor(phase));
 
+    const startTransition = () => {
+      let globals = this.router.globals;
+
+      globals.lastStartedTransitionId = this.$id;
+      globals.transition = this;
+      globals.transitionHistory.enqueue(this);
+
+      trace.traceTransitionStart(this);
+    };
+
     // When the chain is complete, then resolve or reject the deferred
     const transitionSuccess = () => {
       trace.traceSuccess(this.$to(), this);
@@ -646,7 +656,7 @@ export class Transition implements IHookRegistry {
 
     services.$q.when()
         .then(() => chainFor(TransitionHookPhase.BEFORE))
-        .then(() => trace.traceTransitionStart(this))
+        .then(startTransition)
         // This waits to build the RUN hook chain until after the "BEFORE" hooks complete
         // This allows a BEFORE hook to dynamically add RUN hooks via the Transition object.
         .then(() => chainFor(TransitionHookPhase.RUN))
@@ -655,10 +665,9 @@ export class Transition implements IHookRegistry {
     return this.promise;
   }
 
-  /**
-   * Checks if this transition is currently active/running.
-   */
-  isActive = () => this === this._options.current();
+  /** Checks if this transition is currently active/running. */
+  isActive = () =>
+      this.router.globals.transition === this;
 
   /**
    * Checks if the Transition is valid

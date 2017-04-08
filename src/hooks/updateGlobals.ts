@@ -19,15 +19,11 @@ import { TransitionService } from '../transition/transitionService';
 const updateGlobalState = (trans: Transition) => {
   let globals = trans.router.globals;
 
-  const transitionStarted = () => {
-    globals.transition = trans;
-    globals.transitionHistory.enqueue(trans);
-  };
-
   const transitionSuccessful = () => {
     globals.successfulTransitions.enqueue(trans);
     globals.$current = trans.$to();
     globals.current = globals.$current.self;
+
     copy(trans.params(), globals.params);
   };
 
@@ -36,10 +32,9 @@ const updateGlobalState = (trans: Transition) => {
     if (globals.transition === trans) globals.transition = null;
   };
 
-  trans.onStart({}, transitionStarted, { priority: 10000 });
   trans.onSuccess({}, transitionSuccessful, { priority: 10000 });
   trans.promise.then(clearCurrentTransition, clearCurrentTransition);
 };
 
 export const registerUpdateGlobalState = (transitionService: TransitionService) =>
-    transitionService.onBefore({}, updateGlobalState);
+    transitionService.onCreate({}, updateGlobalState);
